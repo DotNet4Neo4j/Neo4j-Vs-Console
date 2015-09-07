@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="f79a4146-8c54-4c7b-b1b6-b8569e18211b" Version="0.11" Language="en-US" Publisher="Anabranch" />
+    <Identity Id="f79a4146-8c54-4c7b-b1b6-b8569e18211b" Version="0.5" Language="en-US" Publisher="Anabranch" />
     <DisplayName>Neo4j Console</DisplayName>
     <Description xml:space="preserve">A console window for sending Cypher to your local instance of Neo4j.
     </Description>
-    <MoreInfo>http://geekswithblogs.net/cskardon/archive/2013/12/10/neo4j-console.aspx</MoreInfo>
+    <MoreInfo>https://github.com/cskardon/Neo4j-Vs-Console</MoreInfo>
     <Icon>Resources\neo4j_logo-colour.ico</Icon>
     <PreviewImage>Resources\neo4j_logo-colour.png</PreviewImage>
     <Tags>Neo4j, Cypher</Tags>
   </Metadata>
   <Installation InstalledByMsi="false">
-    <InstallationTarget Version="[11.0,13.0)" Id="Microsoft.VisualStudio.Pro" />
+    <InstallationTarget Version="[11.0,)" Id="Microsoft.VisualStudio.IntegratedShell" />
   </Installation>
   <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.0,)" />
-    <Dependency Id="Microsoft.VisualStudio.MPF.11.0" DisplayName="Visual Studio MPF 11.0" d:Source="Installed" Version="[11.0,12.0)" />
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+    <Dependency Id="Microsoft.VisualStudio.MPF.11.0" DisplayName="Visual Studio MPF 11.0" d:Source="Installed" Version="[11.0,)" />
   </Dependencies>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
