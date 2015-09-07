@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="f79a4146-8c54-4c7b-b1b6-b8569e18211b" Version="0.5" Language="en-US" Publisher="Anabranch" />
+    <Identity Id="f79a4146-8c54-4c7b-b1b6-b8569e18211b" Version="0.6" Language="en-US" Publisher="Anabranch (cskardon)" />
     <DisplayName>Neo4j Console</DisplayName>
     <Description xml:space="preserve">A console window for sending Cypher to your local instance of Neo4j.
     </Description>

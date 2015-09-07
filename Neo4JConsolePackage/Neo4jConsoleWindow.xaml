@@ -52,7 +52,7 @@
                     KeyDown="CypherKeyDown" 
                     KeyUp="CypherKeyUp"
                     Text="{Binding CypherQuery, UpdateSourceTrigger=PropertyChanged}"
-                    AcceptsReturn="True" 
+                   
                     FontFamily="Consolas"
                     autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding AutoCompleteItems}"
                     autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase"

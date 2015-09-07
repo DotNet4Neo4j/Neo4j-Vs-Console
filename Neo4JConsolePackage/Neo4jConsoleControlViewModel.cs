@@ -8,6 +8,7 @@
     using System.Windows.Input;
     using GalaSoft.MvvmLight;
     using GalaSoft.MvvmLight.Command;
+    using Microsoft.VisualStudio.TextManager.Interop;
     using Newtonsoft.Json;
     using RestSharp;
 
@@ -15,11 +16,22 @@
     {
         private static class Neo4jKeyWords
         {
-            public static readonly string[] Funcs = {"abs", "acos", "allShortestPaths", "asin", "atan", "atan2", "avg", "ceil", "coalesce", "collect", "cos", "cot", "count", "degrees", "e", "endnode", "exp", "extract", "filter", "floor", "haversin", "head", "id", "keys", "labels", "last", "left", "length", "log", "log10", "lower", "ltrim", "max", "min", "node", "nodes", "percentileCont", "percentileDisc", "pi", "radians", "rand", "range", "reduce", "rel", "relationship", "relationships", "replace", "right", "round", "rtrim", "shortestPath", "sign", "sin", "split", "sqrt", "startnode", "stdev", "stdevp", "str", "substring", "sum", "tail", "tan", "timestamp", "toFloat", "toInt", "trim", "type", "upper"};
-            public static readonly string[] Preds = {"all", "and", "any", "has", "in", "none", "not", "or", "single", "xor"};
-            public static readonly string[] Keywords = {"as", "asc", "ascending", "assert", "by", "case", "commit", "constraint", "create", "csv", "cypher", "delete", "desc", "descending", "distinct", "drop", "else", "end", "explain", "false", "fieldterminator", "foreach", "from", "headers", "in", "index", "is", "limit", "load", "match", "merge", "null", "on", "optional", "order", "periodic", "profile", "remove", "return", "scan", "set", "skip", "start", "then", "true", "union", "unique", "unwind", "using", "when", "where", "with"};
+            private static readonly string[] Funcs = {"abs", "acos", "allShortestPaths", "asin", "atan", "atan2", "avg", "ceil", "coalesce", "collect", "cos", "cot", "count", "degrees", "e", "endnode", "exp", "extract", "filter", "floor", "haversin", "head", "id", "keys", "labels", "last", "left", "length", "log", "log10", "lower", "ltrim", "max", "min", "node", "nodes", "percentileCont", "percentileDisc", "pi", "radians", "rand", "range", "reduce", "rel", "relationship", "relationships", "replace", "right", "round", "rtrim", "shortestPath", "sign", "sin", "split", "sqrt", "startnode", "stdev", "stdevp", "str", "substring", "sum", "tail", "tan", "timestamp", "toFloat", "toInt", "trim", "type", "upper"};
+            private static readonly string[] Preds = {"all", "and", "any", "has", "in", "none", "not", "or", "single", "xor"};
+            private static readonly string[] Keywords = {"as", "asc", "ascending", "assert", "by", "case", "commit", "constraint", "create", "csv", "cypher", "delete", "desc", "descending", "distinct", "drop", "else", "end", "explain", "false", "fieldterminator", "foreach", "from", "headers", "in", "index", "is", "limit", "load", "match", "merge", "null", "on", "optional", "order", "periodic", "profile", "remove", "return", "scan", "set", "skip", "start", "then", "true", "union", "unique", "unwind", "using", "when", "where", "with"};
 
-            public static IEnumerable<string> Combined {  get { return Funcs.Union(Preds.Union(Keywords)); } }
+            public static IEnumerable<string> Combined(LabelsAndRelationships lar)
+            {
+                var combined = Funcs.Union(Preds.Union(Keywords));
+                if (lar != null)
+                {
+                    if (lar.Labels != null)
+                        combined = combined.Union(lar.Labels);
+                    if (lar.Relationships != null)
+                        combined = combined.Union(lar.Relationships);
+                }
+                return combined;
+            }
         }
 
         public static Regex OpenBracesRegex = new Regex(
@@ -47,14 +59,45 @@
         private TextWrapping _resultsWrapping = TextWrapping.NoWrap;
         private IList<string> _autoCompleteItems;
 
+        private class LabelsAndRelationships
+        {
+            public IEnumerable<string>  Labels { get; set; } //http://localhost:7474/db/data/labels
+            public IEnumerable<string>  Relationships { get; set; } //match n-[r]->() return distinct(type(r))
+        }
+
+        private class DataHolder<T>
+        {
+            public T Data { get; set; }
+        }
+
+        private LabelsAndRelationships GetLabelsAndRelationships()
+        {
+            var output = new LabelsAndRelationships();
+            try
+            {
+                var res = PostUsingRestSharp("MATCH n-[r]-() RETURN DISTINCT(TYPE(r))");
+                output.Relationships = JsonConvert.DeserializeObject<DataHolder<IEnumerable<string>>>(res).Data;
+
+                var request = new RestRequest("labels");
+                IRestResponse response = _restClient.Get(request);
+                output.Labels = JsonConvert.DeserializeObject<IEnumerable<string>>(response.Content);
+            }
+            catch (Exception)
+            {
+                //Unable to contact the Server.
+            }
+            return output;
+        }
+
         public Neo4jConsoleControlViewModel(IRestClient restClient)
         {
-            CypherQuery = "MATCH (n) RETURN n LIMIT 100";
+            CypherQuery = "MATCH (n)\r\nRETURN n LIMIT 100";
             Neo4jUrl = "http://localhost.:7474/db/data/"; //TODO: Pull from settings.
             CypherHistory = new List<string>();
             _restClient = restClient ?? new RestClient(Neo4jUrl);
-            _autoCompleteItems = Neo4jKeyWords.Combined.ToList();
 
+            var lAndR = GetLabelsAndRelationships();
+            _autoCompleteItems = Neo4jKeyWords.Combined(lAndR).ToList();
             SetupCommands();
         }
 
@@ -95,6 +138,8 @@
                 if (_neo4jUrl == value) return;
                 _neo4jUrl = value;
                 _restClient = new RestClient(value);
+                var lAndR = GetLabelsAndRelationships();
+                _autoCompleteItems = Neo4jKeyWords.Combined(lAndR).ToList();
                 RaisePropertyChanged("Neo4jUrl");
             }
         }
