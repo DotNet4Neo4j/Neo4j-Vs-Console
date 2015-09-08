@@ -24,10 +24,7 @@
             [Fact]
             public void ShowsNoDataMessage_WhenResponseIsEmpty()
             {
-                const string expected =
-@"+-------------------+
-| No data returned. |
-+-------------------+";
+                var expected = string.Format(@"+-------------------+{0}| No data returned. |{0}+-------------------+", Environment.NewLine);
 
                 var response = new Neo4jResponse();
                 response.ToString().Should().Be(expected);
@@ -36,11 +33,8 @@
             [Fact]
             public void ShowsNoDataResponse_WhenColumnsDefinedButNoDataReturned()
             {
-                const string expected =
-@"+-------------------+
-| No data returned. |
-+-------------------+";
-                
+                var expected = string.Format(@"+-------------------+{0}| No data returned. |{0}+-------------------+", Environment.NewLine);
+
                 var response = new Neo4jResponse();
                 response.Columns.Add("n");
 
@@ -50,12 +44,7 @@
             [Fact]
             public void ShowsSingleColumn_WhenDataExists()
             {
-                const string expected =
-@"+-------------+
-| n           |
-+-------------+
-| {Foo:""Bar""} | 
-+-------------+";
+                string expected = string.Format(@"+-------------+{0}| n           |{0}+-------------+{0}| {{Foo:""Bar""}} | {0}+-------------+", Environment.NewLine);
 
                 var response = new Neo4jResponse();
                 response.Columns.Add("n");
@@ -67,13 +56,7 @@
             [Fact]
             public void ShowsSingleColumn_MultiRows_WhenDataExists()
             {
-                const string expected =
-@"+---------------+
-| n             |
-+---------------+
-| {Foo:""Bar""}   | 
-| {Foo2:""Bar2""} | 
-+---------------+";
+                string expected =string.Format("+---------------+{0}| n             |{0}+---------------+{0}| {{Foo:\"Bar\"}}   | {0}| {{Foo2:\"Bar2\"}} | {0}+---------------+", Environment.NewLine);
 
                 var response = new Neo4jResponse();
                 response.Columns.Add("n");
@@ -86,13 +69,7 @@
 
             [Fact] public void ColumnShouldBeAsWideAsTheLargestData()
             {
-                const string expected =
-@"+------------------------------------+
-| n                                  |
-+------------------------------------+
-| {Foo:""Quite a long piece of data""} | 
-| {Foo:""Bar""}                        | 
-+------------------------------------+";
+                 string expected = string.Format("+------------------------------------+{0}| n                                  |{0}+------------------------------------+{0}| {{Foo:\"Quite a long piece of data\"}} | {0}| {{Foo:\"Bar\"}}                        | {0}+------------------------------------+", Environment.NewLine);
 
                 var response = new Neo4jResponse();
                 response.Columns.Add("n");
@@ -105,12 +82,7 @@
             [Fact]
             public void ShowsTwoColumns_WithData()
             {
-                const string expected =
-@"+---------------+---------------+
-| n             | o             |
-+---------------+---------------+
-| {Foo:""Bar""}   | {Foo2:""Bar2""} | 
-+---------------+---------------+";
+                string expected = "+---------------+---------------+" + Environment.NewLine + "| n             | o             |" + Environment.NewLine + "+---------------+---------------+" + Environment.NewLine + "| {Foo:\"Bar\"}   | {Foo2:\"Bar2\"} | " + Environment.NewLine + "+---------------+---------------+";
 
                 var response = new Neo4jResponse();
                 response.Columns.Add("n");
