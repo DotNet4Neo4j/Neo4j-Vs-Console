@@ -2,12 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Input;
-    using Microsoft.VisualStudio.Text.Differencing;
 
     /// <summary>
     ///     This is taken from https://github.com/Nimgoble/WPFTextBoxAutoComplete/ - it's added as code as extensions to VS
@@ -15,31 +13,10 @@
     /// </summary>
     public static class AutoCompleteBehavior
     {
-        private static readonly TextChangedEventHandler onTextChanged = OnTextChanged;
-        private static readonly KeyEventHandler onPreviewKeyDown = OnPreviewKeyDown;
-        //private static readonly KeyEventHandler onKeyDown = OnKeyDown;
+        private static readonly TextChangedEventHandler OnTextChanged = TextBox_OnTextChanged;
+        private static readonly KeyEventHandler OnPreviewKeyDown = TextBox_OnPreviewKeyDown;
 
-        private static void OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                e.Handled = true;
-
-            Debug.WriteLine($"PRESSED ---> {e.Key}");
-            if (e.Key == Key.Enter && (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)))
-            {
-                var tb = e.OriginalSource as TextBox;
-                if (tb == null)
-                    return;
-
-                tb.Text = $"{tb.Text}{Environment.NewLine}";
-                e.Handled = true;
-            }
-        }
-
-
-        /// <summary>
-        ///     The collection to search for matches from.
-        /// </summary>
+        /// <summary>The collection to search for matches from.</summary>
         public static readonly DependencyProperty AutoCompleteItemsSource =
             DependencyProperty.RegisterAttached
                 (
@@ -49,9 +26,7 @@
                     new UIPropertyMetadata(null, OnAutoCompleteItemsSource)
                 );
 
-        /// <summary>
-        ///     Whether or not to ignore case when searching for matches.
-        /// </summary>
+        /// <summary>Whether or not to ignore case when searching for matches.</summary>
         public static readonly DependencyProperty AutoCompleteStringComparison =
             DependencyProperty.RegisterAttached
                 (
@@ -66,7 +41,7 @@
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        private static void TextBox_OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key != Key.Enter)
                 return;
@@ -76,38 +51,35 @@
                 return;
 
             //If we pressed enter and if the selected text goes all the way to the end, move our caret position to the end
-            if (tb.SelectionLength > 0)// && (tb.SelectionStart + tb.SelectionLength == tb.Text.Length))
+            if (tb.SelectionLength > 0) // && (tb.SelectionStart + tb.SelectionLength == tb.Text.Length))
             {
                 var caretShouldgoTo = tb.SelectionStart + tb.SelectionLength;
                 tb.SelectionStart = tb.CaretIndex = caretShouldgoTo;
                 //tb.SelectionStart = tb.CaretIndex = tb.Text.Length;
                 tb.SelectionLength = 0;
             }
-            
+
             if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
             {
                 var caretLocation = tb.CaretIndex;
-                tb.TextChanged -= onTextChanged;
+                tb.TextChanged -= OnTextChanged;
                 tb.Text = tb.Text.Insert(tb.CaretIndex, Environment.NewLine);
                 tb.CaretIndex = tb.SelectionStart = caretLocation + 2;
-                tb.TextChanged += onTextChanged;
+                tb.TextChanged += OnTextChanged;
             }
         }
 
-        
 
-        /// <summary>
-        ///     Search for auto-completion suggestions.
-        /// </summary>
+        /// <summary>Search for auto-completion suggestions.</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnTextChanged(object sender, TextChangedEventArgs e)
+        private static void TextBox_OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            if( (from change in e.Changes where change.RemovedLength > 0 select change).Any() && (from change in e.Changes where change.AddedLength > 0 select change).Any() == false)
+            if ((from change in e.Changes where change.RemovedLength > 0 select change).Any() && (from change in e.Changes where change.AddedLength > 0 select change).Any() == false)
                 return;
 
             var tb = e.OriginalSource as TextBox;
-            if (sender == null || tb == null)
+            if (tb == null)
                 return;
 
             var values = GetAutoCompleteItemsSource(tb);
@@ -156,7 +128,7 @@
             var match = (values
                 .Where(subvalue => subvalue.Length >= lengthOfText)
                 .Where(value => value.Substring(0, lengthOfText)
-                .Equals(textToLookFor, comparer)))
+                    .Equals(textToLookFor, comparer)))
                 .FirstOrDefault();
             //            var match = (values.Where(subvalue => subvalue.Length >= textLength).Where(value => value.Substring(0, textLength).Equals(tb.Text, comparer))).FirstOrDefault();
 
@@ -164,14 +136,14 @@
             if (string.IsNullOrEmpty(match) || textToLookFor.Length == 0)
                 return;
 
-            tb.TextChanged -= onTextChanged;
+            tb.TextChanged -= OnTextChanged;
             //tb.Text = match;
             tb.Text = tb.Text.Insert(tb.CaretIndex, match.Substring(textToLookFor.Length, match.Length - textToLookFor.Length));
 
             tb.CaretIndex = lengthOfText;
             tb.SelectionStart = initialCaretIndex;
             tb.SelectionLength = (match.Length - lengthOfText);
-            tb.TextChanged += onTextChanged;
+            tb.TextChanged += OnTextChanged;
         }
 
         #region Items Source
@@ -193,23 +165,20 @@
         private static void OnAutoCompleteItemsSource(object sender, DependencyPropertyChangedEventArgs e)
         {
             var tb = sender as TextBox;
-            if (sender == null)
+            if (tb == null)
                 return;
 
             //If we're being removed, remove the callbacks
             if (e.NewValue == null)
             {
-                tb.TextChanged -= onTextChanged;
-                tb.KeyDown -= onPreviewKeyDown;
-//                tb.KeyDown -= onKeyDown;
-
+                tb.TextChanged -= OnTextChanged;
+                tb.KeyDown -= OnPreviewKeyDown;
             }
             else
             {
                 //New source.  Add the callbacks
-                tb.TextChanged += onTextChanged;
-                tb.KeyDown += onPreviewKeyDown;
-//                tb.KeyDown += onKeyDown;
+                tb.TextChanged += OnTextChanged;
+                tb.KeyDown += OnPreviewKeyDown;
             }
         }
 
