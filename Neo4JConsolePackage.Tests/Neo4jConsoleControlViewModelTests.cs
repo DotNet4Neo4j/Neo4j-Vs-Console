@@ -161,6 +161,7 @@
                 var rc = new Mock<IRestClient>();
                 var vm = new Neo4jConsoleControlViewModel(rc.Object) {CypherQuery = cypherQuery};
 
+                rc.ResetCalls();
                 vm.PostCommand.Execute(null);
                 rc.Verify(r => r.Execute(It.IsAny<IRestRequest>()), Times.Never);
             }
@@ -174,6 +175,7 @@
                 var rc = new Mock<IRestClient>();
                 var vm = new Neo4jConsoleControlViewModel(rc.Object) {Neo4jUrl = neo4jUrl};
 
+                rc.ResetCalls();
                 vm.PostCommand.Execute(null);
                 rc.Verify(r => r.Execute(It.IsAny<IRestRequest>()), Times.Never);
             }

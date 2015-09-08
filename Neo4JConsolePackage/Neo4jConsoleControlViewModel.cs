@@ -70,6 +70,15 @@
             public T Data { get; set; }
         }
 
+        private void SetAutoCompleteEntries()
+        {
+            LabelsAndRelationships lAndR = null;
+            if (!string.IsNullOrWhiteSpace(Neo4jUrl))
+                 lAndR = GetLabelsAndRelationships();
+
+            _autoCompleteItems = Neo4jKeyWords.Combined(lAndR).ToList();
+        }
+
         private LabelsAndRelationships GetLabelsAndRelationships()
         {
             var output = new LabelsAndRelationships();
@@ -91,13 +100,12 @@
 
         public Neo4jConsoleControlViewModel(IRestClient restClient)
         {
-            CypherQuery = "MATCH (n)\r\nRETURN n LIMIT 100";
+            CypherQuery = "MATCH (n) RETURN n LIMIT 100";
             Neo4jUrl = "http://localhost.:7474/db/data/"; //TODO: Pull from settings.
             CypherHistory = new List<string>();
             _restClient = restClient ?? new RestClient(Neo4jUrl);
 
-            var lAndR = GetLabelsAndRelationships();
-            _autoCompleteItems = Neo4jKeyWords.Combined(lAndR).ToList();
+            SetAutoCompleteEntries();
             SetupCommands();
         }
 
@@ -135,14 +143,33 @@
             get { return _neo4jUrl; }
             set
             {
-                if (_neo4jUrl == value) return;
+                if (_neo4jUrl == value)
+                    return;
+                
                 _neo4jUrl = value;
-                _restClient = new RestClient(value);
-                var lAndR = GetLabelsAndRelationships();
-                _autoCompleteItems = Neo4jKeyWords.Combined(lAndR).ToList();
-                RaisePropertyChanged("Neo4jUrl");
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    RaisePropertyChanged();
+                    return;
+                }
+
+                try
+                {
+                    _restClient = new RestClient(value);
+                    
+                }
+                catch (UriFormatException)
+                {
+                    _restClient = null;
+                    
+                }
+
+                SetAutoCompleteEntries();
+                RaisePropertyChanged();
             }
         }
+
+        
 
         public string CypherResults
         {
@@ -166,7 +193,7 @@
 
         private void SetupCommands()
         {
-            ClearCommand = new RelayCommand(() => CypherResults = String.Empty);
+            ClearCommand = new RelayCommand(() => CypherResults = string.Empty);
             PostCommand = new RelayCommand<Action>(callback => Post(CypherQuery, callback));
             NextHistoryCommand = new RelayCommand(NextHistory);
             PreviousHistoryCommand = new RelayCommand(PreviousHistory);
@@ -223,12 +250,12 @@
 
         private void Post(string cypherQuery, Action callback)
         {
-            if (String.IsNullOrWhiteSpace(cypherQuery) || String.IsNullOrWhiteSpace(Neo4jUrl))
+            if (string.IsNullOrWhiteSpace(cypherQuery) || string.IsNullOrWhiteSpace(Neo4jUrl))
                 return;
 
             InsertHistory(cypherQuery);
             string query = cypherQuery;
-            CypherQuery = String.Empty;
+            CypherQuery = string.Empty;
 
             DateTime start = DateTime.Now;
             string response;
@@ -242,8 +269,8 @@
             }
             TimeSpan timeTaken = DateTime.Now - start;
 
-            if (String.IsNullOrWhiteSpace(response))
-                response = String.Format("No response from the server ({0}), is it running?", Neo4jUrl);
+            if (string.IsNullOrWhiteSpace(response))
+                response = string.Format("No response from the server ({0}), is it running?", Neo4jUrl);
             else
             {
                 try
@@ -255,7 +282,7 @@
                     else
                     {
                         var err = JsonConvert.DeserializeObject<Neo4jErrorResponse>(response);
-                        if (!String.IsNullOrWhiteSpace(err.Message))
+                        if (!string.IsNullOrWhiteSpace(err.Message))
                             response = err.Message;
                         else if (ob != null)
                             response = ob.ToString();
@@ -263,17 +290,20 @@
                 }
                 catch (Exception ex)
                 {
-                    response = String.Format("Couldn't deserialize ({0}) - raw data output instead:{1}", ex.Message, response);
+                    response = string.Format("Couldn't deserialize ({0}) - raw data output instead:{1}", ex.Message, response);
                 }
             }
 
-            CypherResults = String.Format("{0}{1}<<<{3}>>>>{1}{2}{1}Took {4}ms{1}", CypherResults, Environment.NewLine, response, query, timeTaken.TotalMilliseconds);
+            CypherResults = string.Format("{0}{1}<<<{3}>>>>{1}{2}{1}Took {4}ms{1}", CypherResults, Environment.NewLine, response, query, timeTaken.TotalMilliseconds);
             if (callback != null)
                 callback();
         }
 
         public string PostUsingRestSharp(string data)
         {
+            if (_restClient == null)
+                return null;
+
             var request = new RestRequest("cypher");
             request.Parameters.Add(new Parameter {Name = "query", Type = ParameterType.GetOrPost, Value = data});
             IRestResponse response = _restClient.Post(request);
