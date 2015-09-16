@@ -393,6 +393,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoCompleteBehavior\CypherEvaluatorTests.cs" />
     <Compile Include="Neo4jConsoleControlViewModelTests.cs" />
     <Compile Include="Neo4jDataTests.cs" />
     <Compile Include="Neo4jErrorResponseTests.cs" />

@@ -55,6 +55,8 @@
                    
                     FontFamily="Consolas"
                     autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding AutoCompleteItems}"
+                    autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteLabelsSource="{Binding AutoCompleteLabels}"
+                    autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteRelationshipsSource="{Binding AutoCompleteRelationships}"
                     autoCompleteBehavior:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase"
                     />
 

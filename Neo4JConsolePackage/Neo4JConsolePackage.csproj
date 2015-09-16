@@ -436,6 +436,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoCompleteBehavior\AutoCompleteBehavior.cs" />
+    <Compile Include="AutoCompleteBehavior\CypherEvaluator.cs" />
+    <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Neo4jConsoleControlViewModel.cs" />
     <Compile Include="Neo4jConsoleWindow.xaml.cs">
       <DependentUpon>Neo4jConsoleWindow.xaml</DependentUpon>

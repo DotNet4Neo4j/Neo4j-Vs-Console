@@ -6,6 +6,7 @@
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Input;
+    using Anabranch.Neo4JConsolePackage.Extensions;
 
     /// <summary>
     ///     This is taken from https://github.com/Nimgoble/WPFTextBoxAutoComplete/ - it's added as code as extensions to VS
@@ -16,11 +17,32 @@
         private static readonly TextChangedEventHandler OnTextChanged = TextBox_OnTextChanged;
         private static readonly KeyEventHandler OnPreviewKeyDown = TextBox_OnPreviewKeyDown;
 
+        #region Dependency Properties
+        /// <summary>The collection to search for matches from.</summary>
+        public static readonly DependencyProperty AutoCompleteLabelsSource =
+            DependencyProperty.RegisterAttached
+                (
+                    nameof(AutoCompleteLabelsSource),
+                    typeof(IEnumerable<string>),
+                    typeof(AutoCompleteBehavior),
+                    new UIPropertyMetadata(null, OnAutoCompleteLabelsSource)
+                );
+
+        public static readonly DependencyProperty AutoCompleteRelationshipsSource =
+            DependencyProperty.RegisterAttached
+                (
+                    nameof(AutoCompleteRelationshipsSource),
+                    typeof(IEnumerable<string>),
+                    typeof(AutoCompleteBehavior),
+                    new UIPropertyMetadata(null, OnAutoCompleteRelationshipsSource)
+                );
+
+
         /// <summary>The collection to search for matches from.</summary>
         public static readonly DependencyProperty AutoCompleteItemsSource =
             DependencyProperty.RegisterAttached
                 (
-                    "AutoCompleteItemsSource",
+                    nameof(AutoCompleteItemsSource),
                     typeof (IEnumerable<string>),
                     typeof (AutoCompleteBehavior),
                     new UIPropertyMetadata(null, OnAutoCompleteItemsSource)
@@ -36,9 +58,9 @@
                     new UIPropertyMetadata(StringComparison.Ordinal)
                 );
 
-        /// <summary>
-        ///     Used for moving the caret to the end of the suggested auto-completion text.
-        /// </summary>
+        #endregion Dependency Properties
+
+        /// <summary>Used for moving the caret to the end of the suggested auto-completion text.</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private static void TextBox_OnPreviewKeyDown(object sender, KeyEventArgs e)
@@ -70,21 +92,25 @@
         }
 
 
+
+
         /// <summary>Search for auto-completion suggestions.</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private static void TextBox_OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            if ((from change in e.Changes where change.RemovedLength > 0 select change).Any() && (from change in e.Changes where change.AddedLength > 0 select change).Any() == false)
+            if (e.Changes.Any(change => change.RemovedLength > 0) && e.Changes.Any(change => change.AddedLength > 0) == false)
                 return;
 
             var tb = e.OriginalSource as TextBox;
             if (tb == null)
                 return;
 
-            var values = GetAutoCompleteItemsSource(tb);
+            var labels = GetAutoCompleteLabelsSource(tb).ToList();
+            var relationships = GetAutoCompleteRelationshipsSource(tb).ToList();
+            var values = GetAutoCompleteItemsSource(tb).ToList();
             //No reason to search if we don't have any values.
-            if (values == null)
+            if (values.IsNullOrEmpty() && relationships.IsNullOrEmpty() && labels.IsNullOrEmpty())
                 return;
 
             //No reason to search if there's nothing there.
@@ -125,13 +151,14 @@
             var lengthOfText = textToLookFor.Length;
             var initialCaretIndex = tb.CaretIndex;
 
-            var match = (values
-                .Where(subvalue => subvalue.Length >= lengthOfText)
-                .Where(value => value.Substring(0, lengthOfText)
-                    .Equals(textToLookFor, comparer)))
-                .FirstOrDefault();
-            //            var match = (values.Where(subvalue => subvalue.Length >= textLength).Where(value => value.Substring(0, textLength).Equals(tb.Text, comparer))).FirstOrDefault();
-
+            string match;
+            if (CypherEvaluator.WasLastSignificantCharARelationshipLabel(tb.Text.Substring(0, tb.CaretIndex)))
+                match = GetFirstMatch(relationships, lengthOfText, textToLookFor, comparer);
+            else if(CypherEvaluator.WasLastSignificantCharANodeLabel(tb.Text.Substring(0, tb.CaretIndex)))
+                match = GetFirstMatch(labels, lengthOfText, textToLookFor, comparer);
+            else
+                match = GetFirstMatch(values, lengthOfText, textToLookFor, comparer);
+               
             //Nothing.  Leave 'em alone
             if (string.IsNullOrEmpty(match) || textToLookFor.Length == 0)
                 return;
@@ -146,6 +173,94 @@
             tb.TextChanged += OnTextChanged;
         }
 
+        private static string GetFirstMatch(ICollection<string> collection, int lengthOfText, string subString, StringComparison comparer)
+        {
+            var match = (collection
+               .Where(subvalue => subvalue.Length >= lengthOfText)
+               .Where(value => value.Substring(0, lengthOfText)
+                   .Equals(subString, comparer)))
+               .FirstOrDefault();
+
+            return match;
+        }
+
+
+        #region Labels Source
+        public static IEnumerable<string> GetAutoCompleteLabelsSource(DependencyObject obj)
+        {
+            var objRtn = obj.GetValue(AutoCompleteLabelsSource);
+            if (objRtn is IEnumerable<string>)
+                return (objRtn as IEnumerable<string>);
+
+            return null;
+        }
+
+        public static void SetAutoCompleteLabelsSource(DependencyObject obj, IEnumerable<string> value)
+        {
+            obj.SetValue(AutoCompleteLabelsSource, value);
+        }
+
+        private static void OnAutoCompleteLabelsSource(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            //            var tb = sender as TextBox;
+            //            if (tb == null)
+            //                return;
+            //
+            //            //If we're being removed, remove the callbacks
+            //            if (e.NewValue == null)
+            //            {
+            //                tb.TextChanged -= OnTextChanged;
+            //                tb.KeyDown -= OnPreviewKeyDown;
+            //            }
+            //            else
+            //            {
+            //                //New source.  Add the callbacks
+            //                tb.TextChanged += OnTextChanged;
+            //                tb.KeyDown += OnPreviewKeyDown;
+            //            }
+        }
+
+        #endregion Labels Source
+
+        #region Relationships Source
+
+        public static IEnumerable<string> GetAutoCompleteRelationshipsSource(DependencyObject obj)
+        {
+            var objRtn = obj.GetValue(AutoCompleteRelationshipsSource);
+            if (objRtn is IEnumerable<string>)
+                return (objRtn as IEnumerable<string>);
+
+            return null;
+        }
+
+        public static void SetAutoCompleteRelationshipsSource(DependencyObject obj, IEnumerable<string> value)
+        {
+            obj.SetValue(AutoCompleteRelationshipsSource, value);
+        }
+
+
+        private static void OnAutoCompleteRelationshipsSource(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            //            var tb = sender as TextBox;
+            //            if (tb == null)
+            //                return;
+            //
+            //            //If we're being removed, remove the callbacks
+            //            if (e.NewValue == null)
+            //            {
+            //                tb.TextChanged -= OnTextChanged;
+            //                tb.KeyDown -= OnPreviewKeyDown;
+            //            }
+            //            else
+            //            {
+            //                //New source.  Add the callbacks
+            //                tb.TextChanged += OnTextChanged;
+            //                tb.KeyDown += OnPreviewKeyDown;
+            //            }
+        }
+
+        #endregion Relationships Source
+        
         #region Items Source
 
         public static IEnumerable<string> GetAutoCompleteItemsSource(DependencyObject obj)
