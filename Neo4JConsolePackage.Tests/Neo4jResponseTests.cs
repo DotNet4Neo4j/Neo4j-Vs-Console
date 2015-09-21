@@ -5,7 +5,7 @@
     using Anabranch.Neo4JConsolePackage;
     using FluentAssertions;
     using Xunit;
-
+    
     public class Neo4jResponseTests
     {
         public class Constructor
@@ -21,6 +21,17 @@
 
         public class ToStringMethod
         {
+            [Fact]
+            public void FormatsCorrectly_WhenContainingSimpleData()
+            {
+                var expected = string.Format("+----------+{0}| count(n) |{0}+----------+{0}| 2075     | {0}+----------+", Environment.NewLine);
+
+                var response = new Neo4jResponse();
+                response.Columns.Add("count(n)");
+                response.Data.Add(new Neo4jSimpleData {Data = 2075});
+                response.ToString().Should().Be(expected);
+            }
+
             [Fact]
             public void ShowsNoDataMessage_WhenResponseIsEmpty()
             {

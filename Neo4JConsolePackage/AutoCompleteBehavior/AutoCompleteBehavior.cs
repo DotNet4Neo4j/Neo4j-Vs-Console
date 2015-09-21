@@ -92,6 +92,28 @@
         }
 
 
+        private static bool ShouldInsertClosingCharacter(char enteredCharacter, out char closingCharacter)
+        {
+            switch (enteredCharacter)
+            {
+                case '(':
+                    closingCharacter = ')';
+                    return true;
+                case '{':
+                    closingCharacter = '}';
+                    return true;
+                case '[':
+                    closingCharacter = ']';
+                    return true;
+                case '\'':
+                case '\"':
+                    closingCharacter = enteredCharacter;
+                    return true;
+                default:
+                    closingCharacter = ' ';
+                    return false;
+            }   
+        }
 
 
         /// <summary>Search for auto-completion suggestions.</summary>

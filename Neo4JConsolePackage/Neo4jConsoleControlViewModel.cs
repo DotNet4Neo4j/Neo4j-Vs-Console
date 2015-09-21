@@ -6,6 +6,7 @@
     using System.Text.RegularExpressions;
     using System.Windows;
     using System.Windows.Input;
+    using Anabranch.Neo4JConsolePackage.Converters;
     using GalaSoft.MvvmLight;
     using GalaSoft.MvvmLight.Command;
     using Newtonsoft.Json;
@@ -13,6 +14,8 @@
 
     public class Neo4jConsoleControlViewModel : ViewModelBase
     {
+        private static readonly string Title = string.Format("Issues: https://github.com/cskardon/neo4j-vs-console/issues{0}{0}", Environment.NewLine);
+
         public static Regex OpenBracesRegex = new Regex(
             "\\[\\s*\\[",
             RegexOptions.CultureInvariant
@@ -44,6 +47,7 @@
         public Neo4jConsoleControlViewModel(IRestClient restClient)
         {
             CypherQuery = "MATCH (n) RETURN n LIMIT 100";
+            CypherResults = Title;
             Neo4jUrl = "http://localhost.:7474/db/data/"; //TODO: Pull from settings.
             CypherHistory = new List<string>();
             _restClient = restClient ?? new RestClient(Neo4jUrl);
@@ -56,7 +60,7 @@
         {
         }
 
-        public IList<string> CypherHistory { get; }
+        public IList<string> CypherHistory { get; set; }
 
         public ICommand NextHistoryCommand { get; set; }
         public ICommand PreviousHistoryCommand { get; set; }
@@ -71,7 +75,7 @@
             set
             {
                 _resultsWrapping = value;
-                RaisePropertyChanged("ResultsWrapping");
+                RaisePropertyChanged();
             }
         }
 
@@ -141,7 +145,7 @@
             set
             {
                 _cypherResults = value;
-                RaisePropertyChanged("CypherResults");
+                RaisePropertyChanged();
             }
         }
 
@@ -151,7 +155,7 @@
             set
             {
                 _cypherQuery = value;
-                RaisePropertyChanged("CypherQuery");
+                RaisePropertyChanged();
             }
         }
 
@@ -237,7 +241,8 @@
             {
                 try
                 {
-                    var ob = JsonConvert.DeserializeObject<Neo4jResponse>(response);
+                    var ob = JsonConvert.DeserializeObject<Neo4jResponse>(response, new INeo4jDataConverter());
+                    Console.WriteLine("\t\t----> {0}", ob.ToString());
                     if (ob != null && ob.Data.Count > 0)
                         response = ob.ToString();
 
@@ -252,7 +257,7 @@
                 }
                 catch (Exception ex)
                 {
-                    response = string.Format("Couldn't deserialize ({0}) - raw data output instead:{1}", ex.Message, response);
+                    response = string.Format("Couldn't deserialize ({0}) - raw data output instead:{1}{2}{3}", ex.Message, response, Environment.NewLine, ex);
                 }
             }
 

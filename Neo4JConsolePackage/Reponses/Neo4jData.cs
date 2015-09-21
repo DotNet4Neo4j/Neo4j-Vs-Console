@@ -2,8 +2,9 @@
 {
     using System.Collections.Generic;
     using System.Text;
+    using Newtonsoft.Json;
 
-    public class Neo4jData
+    public class Neo4jData : INeo4jData
     {
         private string _combined;
 
@@ -24,7 +25,7 @@
 
         public IDictionary<string, string> Data { get; set; }
 
-        internal int Length
+        public int Length
         {
             get { return Combined.Length; }
         }

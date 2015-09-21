@@ -5,6 +5,8 @@
     using System.Linq;
     using System.Text;
 
+    
+
     public class Neo4jResponse
     {
         private string _sep;
@@ -12,11 +14,11 @@
         public Neo4jResponse()
         {
             Columns = new List<string>();
-            Data = new List<Neo4jData>();
+            Data = new List<INeo4jData>();
         }
 
         public IList<string> Columns { get; set; }
-        public IList<Neo4jData> Data { get; set; }
+        public IList<INeo4jData> Data { get; set; }
 
         public override string ToString()
         {
@@ -28,8 +30,9 @@
             if (Data.Count % Columns.Count != 0)
                 return string.Format("ERROR: The data appears to be corrupt, we have {0} columns, but {1} bits of data.", Columns.Count, Data.Count);
 
-
-            List<int> lengths = Data.Select(neo4JData => neo4JData.Length).ToList();
+            var colLengths = Columns.Select(c => c.Length);
+            var dataLengths = Data.Select(neo4jData => neo4jData.Length).ToList();
+            var lengths = colLengths.Union(dataLengths).ToList();
 
             output.AppendLine(WriteSeparator(lengths));
             output.AppendLine(WriteColumns(lengths));

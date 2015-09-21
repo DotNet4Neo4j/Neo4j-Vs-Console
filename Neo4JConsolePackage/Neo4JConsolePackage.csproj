@@ -437,6 +437,7 @@
   <ItemGroup>
     <Compile Include="AutoCompleteBehavior\AutoCompleteBehavior.cs" />
     <Compile Include="AutoCompleteBehavior\CypherEvaluator.cs" />
+    <Compile Include="Converters\INeo4jDataConverter.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Neo4jConsoleControlViewModel.cs" />
     <Compile Include="Neo4jConsoleWindow.xaml.cs">
@@ -444,9 +445,11 @@
     </Compile>
     <Compile Include="MyToolWindow.cs" />
     <Compile Include="Guids.cs" />
+    <Compile Include="Reponses\INeo4jData.cs" />
     <Compile Include="Reponses\Neo4jData.cs" />
     <Compile Include="Reponses\Neo4jErrorResponse.cs" />
     <Compile Include="Reponses\Neo4jResponse.cs" />
+    <Compile Include="Reponses\Neo4jSimpleData.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

@@ -8,7 +8,6 @@
     using Moq;
     using RestSharp;
     using Xunit;
-    using Xunit.Extensions;
 
     public class Neo4jConsoleControlViewModelTests
     {
@@ -211,6 +210,31 @@
             }
 
             [Fact]
+            public void DeserializesMixedValueResponses()
+            {
+                //Query: MATCH n RETURN n, COUNT(n) LIMIT 1
+                const string successWithCount = "{ \"columns\" : [ \"n\", \"count(n)\" ], \"data\" : [ { \"data\" : { \"ItemId\" : 776 } }, 1 ]}";
+                var vm = new Neo4jConsoleControlViewModel(GetMockRestClient(successWithCount));
+
+                vm.PostCommand.Execute(null);
+                vm.CypherResults.Should().Contain("1");
+                vm.CypherResults.Should().Contain("776");
+                vm.CypherResults.Should().NotContain("Couldn't deserialize");
+            }
+
+            [Fact]
+            public void DeserializesValueResponses()
+            {
+                //Query: MATCH n RETURN COUNT(n)
+                var successWithCount = string.Format("{{ \"columns\" : [ \"count(n)\" ], \"data\" : [ {0} ]}}", 2075);
+                var vm = new Neo4jConsoleControlViewModel(GetMockRestClient(successWithCount));
+
+                vm.PostCommand.Execute(null);
+                vm.CypherResults.Should().Contain("2075");
+                vm.CypherResults.Should().NotContain("Couldn't deserialize");
+            }
+
+            [Fact]
             public void GivesErrorResponse_WhenJsonCantBeDeserializedIntoNeo4jResponseButCanBeNeo4jErrorResponse()
             {
                 const string errorResponse = "{ \"message\" : \"errorNeo4jConsole\", \"exception\" : \"AnException\", \"fullname\" : \"oops.AnException\", \"stacktrace\" : [ \"CodeLines (999)\"] }";
@@ -230,6 +254,7 @@
                 vm.CypherResults.Should().Contain("Couldn't deserialize");
                 vm.CypherResults.Should().Contain(response);
             }
+
 
             [Fact]
             public void CallsBackOnTheCallbackMethod_WhenFinishing()
