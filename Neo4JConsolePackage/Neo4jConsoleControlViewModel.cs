@@ -257,7 +257,7 @@
                 }
                 catch (Exception ex)
                 {
-                    response = string.Format("Couldn't deserialize ({0}) - raw data output instead:{1}{2}{3}", ex.Message, response, Environment.NewLine, ex);
+                    response = string.Format("Couldn't deserialize ({0}) - raw data output instead:{1}{2}", ex.Message, Environment.NewLine, response);
                 }
             }
 
