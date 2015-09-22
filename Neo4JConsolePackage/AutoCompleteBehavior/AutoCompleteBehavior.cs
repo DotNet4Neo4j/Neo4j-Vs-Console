@@ -17,49 +17,6 @@
         private static readonly TextChangedEventHandler OnTextChanged = TextBox_OnTextChanged;
         private static readonly KeyEventHandler OnPreviewKeyDown = TextBox_OnPreviewKeyDown;
 
-        #region Dependency Properties
-        /// <summary>The collection to search for matches from.</summary>
-        public static readonly DependencyProperty AutoCompleteLabelsSource =
-            DependencyProperty.RegisterAttached
-                (
-                    nameof(AutoCompleteLabelsSource),
-                    typeof(IEnumerable<string>),
-                    typeof(AutoCompleteBehavior),
-                    new UIPropertyMetadata(null, OnAutoCompleteLabelsSource)
-                );
-
-        public static readonly DependencyProperty AutoCompleteRelationshipsSource =
-            DependencyProperty.RegisterAttached
-                (
-                    nameof(AutoCompleteRelationshipsSource),
-                    typeof(IEnumerable<string>),
-                    typeof(AutoCompleteBehavior),
-                    new UIPropertyMetadata(null, OnAutoCompleteRelationshipsSource)
-                );
-
-
-        /// <summary>The collection to search for matches from.</summary>
-        public static readonly DependencyProperty AutoCompleteItemsSource =
-            DependencyProperty.RegisterAttached
-                (
-                    nameof(AutoCompleteItemsSource),
-                    typeof (IEnumerable<string>),
-                    typeof (AutoCompleteBehavior),
-                    new UIPropertyMetadata(null, OnAutoCompleteItemsSource)
-                );
-
-        /// <summary>Whether or not to ignore case when searching for matches.</summary>
-        public static readonly DependencyProperty AutoCompleteStringComparison =
-            DependencyProperty.RegisterAttached
-                (
-                    "AutoCompleteStringComparison",
-                    typeof (StringComparison),
-                    typeof (AutoCompleteBehavior),
-                    new UIPropertyMetadata(StringComparison.Ordinal)
-                );
-
-        #endregion Dependency Properties
-
         /// <summary>Used for moving the caret to the end of the suggested auto-completion text.</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -91,11 +48,13 @@
             }
         }
 
-
         private static bool ShouldInsertClosingCharacter(char enteredCharacter, out char closingCharacter)
         {
             switch (enteredCharacter)
             {
+                case '`':
+                    closingCharacter = '`';
+                    return true;
                 case '(':
                     closingCharacter = ')';
                     return true;
@@ -112,9 +71,8 @@
                 default:
                     closingCharacter = ' ';
                     return false;
-            }   
+            }
         }
-
 
         /// <summary>Search for auto-completion suggestions.</summary>
         /// <param name="sender"></param>
@@ -169,6 +127,18 @@
 
             var valueToStartAt = Math.Max(newlineBeforeCaretIndex, Math.Max(spaceBeforeCaretIndex, colonBeforeCaretIndex));
 
+            var lastCharPressed = tb.Text[tb.CaretIndex - 1];
+            char closingChar;
+            if (ShouldInsertClosingCharacter(lastCharPressed, out closingChar))
+            {
+                tb.TextChanged -= OnTextChanged;
+                var cIndex = tb.CaretIndex;
+                tb.Text = tb.Text.Insert(tb.CaretIndex, closingChar.ToString());
+                tb.CaretIndex = cIndex;
+                tb.TextChanged += OnTextChanged;
+            }
+
+
             var textToLookFor = tb.Text.Substring(0, tb.CaretIndex).Substring(valueToStartAt);
             var lengthOfText = textToLookFor.Length;
             var initialCaretIndex = tb.CaretIndex;
@@ -176,11 +146,11 @@
             string match;
             if (CypherEvaluator.WasLastSignificantCharARelationshipLabel(tb.Text.Substring(0, tb.CaretIndex)))
                 match = GetFirstMatch(relationships, lengthOfText, textToLookFor, comparer);
-            else if(CypherEvaluator.WasLastSignificantCharANodeLabel(tb.Text.Substring(0, tb.CaretIndex)))
+            else if (CypherEvaluator.WasLastSignificantCharANodeLabel(tb.Text.Substring(0, tb.CaretIndex)))
                 match = GetFirstMatch(labels, lengthOfText, textToLookFor, comparer);
             else
                 match = GetFirstMatch(values, lengthOfText, textToLookFor, comparer);
-               
+
             //Nothing.  Leave 'em alone
             if (string.IsNullOrEmpty(match) || textToLookFor.Length == 0)
                 return;
@@ -198,23 +168,64 @@
         private static string GetFirstMatch(ICollection<string> collection, int lengthOfText, string subString, StringComparison comparer)
         {
             var match = (collection
-               .Where(subvalue => subvalue.Length >= lengthOfText)
-               .Where(value => value.Substring(0, lengthOfText)
-                   .Equals(subString, comparer)))
-               .FirstOrDefault();
+                .Where(subvalue => subvalue.Length >= lengthOfText)
+                .Where(value => value.Substring(0, lengthOfText)
+                    .Equals(subString, comparer)))
+                .FirstOrDefault();
 
             return match;
         }
 
+        #region Dependency Properties
+
+        /// <summary>The collection to search for matches from.</summary>
+        public static readonly DependencyProperty AutoCompleteLabelsSource =
+            DependencyProperty.RegisterAttached
+                (
+                    nameof(AutoCompleteLabelsSource),
+                    typeof (IEnumerable<string>),
+                    typeof (AutoCompleteBehavior),
+                    new UIPropertyMetadata(null, OnAutoCompleteLabelsSource)
+                );
+
+        public static readonly DependencyProperty AutoCompleteRelationshipsSource =
+            DependencyProperty.RegisterAttached
+                (
+                    nameof(AutoCompleteRelationshipsSource),
+                    typeof (IEnumerable<string>),
+                    typeof (AutoCompleteBehavior),
+                    new UIPropertyMetadata(null, OnAutoCompleteRelationshipsSource)
+                );
+
+
+        /// <summary>The collection to search for matches from.</summary>
+        public static readonly DependencyProperty AutoCompleteItemsSource =
+            DependencyProperty.RegisterAttached
+                (
+                    nameof(AutoCompleteItemsSource),
+                    typeof (IEnumerable<string>),
+                    typeof (AutoCompleteBehavior),
+                    new UIPropertyMetadata(null, OnAutoCompleteItemsSource)
+                );
+
+        /// <summary>Whether or not to ignore case when searching for matches.</summary>
+        public static readonly DependencyProperty AutoCompleteStringComparison =
+            DependencyProperty.RegisterAttached
+                (
+                    "AutoCompleteStringComparison",
+                    typeof (StringComparison),
+                    typeof (AutoCompleteBehavior),
+                    new UIPropertyMetadata(StringComparison.Ordinal)
+                );
+
+        #endregion Dependency Properties
 
         #region Labels Source
+
         public static IEnumerable<string> GetAutoCompleteLabelsSource(DependencyObject obj)
         {
             var objRtn = obj.GetValue(AutoCompleteLabelsSource);
-            if (objRtn is IEnumerable<string>)
-                return (objRtn as IEnumerable<string>);
-
-            return null;
+            return objRtn as IEnumerable<string>;
         }
 
         public static void SetAutoCompleteLabelsSource(DependencyObject obj, IEnumerable<string> value)
@@ -249,10 +260,7 @@
         public static IEnumerable<string> GetAutoCompleteRelationshipsSource(DependencyObject obj)
         {
             var objRtn = obj.GetValue(AutoCompleteRelationshipsSource);
-            if (objRtn is IEnumerable<string>)
-                return (objRtn as IEnumerable<string>);
-
-            return null;
+            return objRtn as IEnumerable<string>;
         }
 
         public static void SetAutoCompleteRelationshipsSource(DependencyObject obj, IEnumerable<string> value)
@@ -282,16 +290,13 @@
         }
 
         #endregion Relationships Source
-        
+
         #region Items Source
 
         public static IEnumerable<string> GetAutoCompleteItemsSource(DependencyObject obj)
         {
             var objRtn = obj.GetValue(AutoCompleteItemsSource);
-            if (objRtn is IEnumerable<string>)
-                return (objRtn as IEnumerable<string>);
-
-            return null;
+            return objRtn as IEnumerable<string>;
         }
 
         public static void SetAutoCompleteItemsSource(DependencyObject obj, IEnumerable<string> value)
