@@ -14,7 +14,7 @@
 
     public class Neo4jConsoleControlViewModel : ViewModelBase
     {
-        private static readonly string Title = string.Format("Issues: https://github.com/cskardon/neo4j-vs-console/issues{0}{0}", Environment.NewLine);
+        private static readonly string Title = string.Format("Issues: https://github.com/DotNet4Neo4j/Neo4j-Vs-Console/issues{0}{0}", Environment.NewLine);
 
         public static Regex OpenBracesRegex = new Regex(
             "\\[\\s*\\[",
