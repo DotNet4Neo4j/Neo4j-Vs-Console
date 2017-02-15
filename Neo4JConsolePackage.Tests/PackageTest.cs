@@ -13,7 +13,7 @@ using System;
 using System.Collections;
 using System.Text;
 using System.Reflection;
-using Microsoft.VsSDK.UnitTestLibrary;
+//using Microsoft.VsSDK.UnitTestLibrary;
 using Microsoft.VisualStudio.Shell.Interop;
 using Anabranch.Neo4JConsolePackage;
 

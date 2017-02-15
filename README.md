@@ -1,6 +1,6 @@
 ## What is Neo4j Console?
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/cskardon/Neo4j-Vs-Console?branch=master&svg=true&passingText=AMAZEBALLS%20%3A0&failingText=EPIC%20FAIL%20%3A%28&pendingText=Time%20will%20tell...)](https://ci.appveyor.com/project/ChrisSkardon/neo4j-vs-console)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/DotNet4Neo4j/Neo4j-Vs-Console?branch=master&svg=true&passingText=AMAZEBALLS%20%3A0&failingText=EPIC%20FAIL%20%3A%28&pendingText=Time%20will%20tell...)](https://ci.appveyor.com/project/ChrisSkardon/neo4j-vs-console)
 
 It's an extension for Visual Studio (2013 & 2015, mebbe the others - if someone has it installed and wants to let me know ;) ) to allow you to query Neo4j from within VS.
 
@@ -22,7 +22,7 @@ To debug within VS, right-click on the `Neo4jConsolePackage` project, and go to 
 
 ## Issues
 
-Issues - raise [here](https://github.com/cskardon/neo4j-vs-console/issues), or email, twitter etc ([@cskardon](twitter.com/cskardon)) 
+Issues - raise [here](https://github.com/DotNet4Neo4j/Neo4j-Vs-Console/issues), or email, twitter etc ([@cskardon](twitter.com/cskardon)) 
 
 ## License Information
 
